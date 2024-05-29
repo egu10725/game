@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오목 게임</title>
+    <style>
+        body {
+            background-color: #F0E68C;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+        }
+        .info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .player-info {
+            margin-bottom: 10px;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(15, 40px);
+            grid-template-rows: repeat(15, 40px);
+            border: 10px solid #8B4513;
+        }
+        .cell {
+            border: 1px solid #000;
+            width: 40px;
+            height: 40px;
+            position: relative;
+        }
+        .cell:nth-child(15n) {
+            border-right: none;
+        }
+        .cell:nth-last-child(-n+15) {
+            border-bottom: none;
+        }
+        .stone {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: black;
+            position: absolute;
+            top: calc(50% - 10px);
+            left: calc(50% - 10px);
+        }
+        .cross {
+            width: 10px;
+            height: 10px;
+            background-color: black;
+            position: absolute;
+            top: calc(50% - 5px);
+            left: calc(50% - 5px);
+            transform: translate(-50%, -50%);
+        }
+    </style>
+</head>
+<body>
+    <h1>오목 게임</h1>
+    <button onclick="resetGame()">초기화</button>
+    <div class="info">
+        <div class="player-info">플레이어 1: <span class="player1-color" style="display: inline-block; width: 20px; height: 20px; border-radius: 50%; background-color: black;"></span></div>
+        <div class="player-info">플레이어 2: <span class="player2-color" style="display: inline-block; width: 20px; height: 20px; border-radius: 50%; background-color: white;"></span></div>
+    </div>
+    <div class="board" id="board"></div>
+    <script>
+        const boardSize = 15;
+        const board = document.getElementById('board');
+        let currentPlayer = 'black';
+        let gameOver = false;
+        const boardState = Array.from({ length: boardSize }, () => Array(boardSize).fill(null));
+
+        function createBoard() {
+            for (let i = 0; i < boardSize; i++) {
+                for (let j = 0; j < boardSize; j++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    cell.dataset.row = i;
+                    cell.dataset.col = j;
+                    cell.addEventListener('click', handleCellClick);
+                    board.appendChild(cell);
+                }
+            }
+        }
+
+        function handleCellClick(event) {
+            if (gameOver) return;
+
+            const cell = event.target;
+            const row = parseInt(cell.dataset.row);
+            const col = parseInt(cell.dataset.col);
+
+            if (!boardState[row][col]) {
+                boardState[row][col] = currentPlayer;
+                const stone = document.createElement('div');
+                stone.classList.add('stone');
+                stone.style.backgroundColor = currentPlayer;
+                cell.appendChild(stone);
+                if (checkWinner(row, col)) {
+                    alert(`${currentPlayer.toUpperCase()} wins!`);
+                    gameOver = true;
+                    return;
+                }
+                currentPlayer = currentPlayer === 'black' ? 'white' : 'black';
+            }
+        }
+
+        function checkWinner(row, col) {
+            const directions = [
+                [-1, 0], [1, 0], [0, -1], [0, 1],
+                [-1, -1], [1, 1], [-1, 1], [1, -1]
+            ];
+
+            for (let d of directions) {
+                let count = 1;
+                let [dx, dy] = d;
+                let r = row + dx;
+                let c = col + dy;
+
+                while (r >= 0 && r < boardSize && c >= 0 && c < boardSize && boardState[r][c] === currentPlayer) {
+                    count++;
+                    r += dx;
+                    c += dy;
+                }
+
+                r = row - dx;
+                c = col - dy;
+                while (r >= 0 && r < boardSize && c >= 0 && c < boardSize && boardState[r][c] === currentPlayer) {
+                    count++;
+                    r -= dx;
+                    c -= dy;
+                }
+
+                if (count >= 5) return true;
+            }
+
+            return false;
+        }
+
+        function resetGame() {
+            currentPlayer = 'black';
+            gameOver = false;
+            boardState.forEach(row => row.fill(null));
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                while (cell.firstChild) {
+                    cell.removeChild(cell.firstChild);
+                }
+            });
+        }
+
+        createBoard();
+    </script>
+</body>
+</html>
